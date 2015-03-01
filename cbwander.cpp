@@ -91,6 +91,9 @@ void CWander::setTurnrate(float turnrate) {
   mturnRate = turnrate;
 }
 
+void Cwander::setVelocity(float velocity) {
+  mVelocity = velocity;
+}
 
 CWander::~CWander()
 {
