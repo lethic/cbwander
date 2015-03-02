@@ -18,8 +18,8 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  **************************************************************************/
-#ifndef DRIVECIRCLE_H
-#define DRIVECIRCLE_H
+#ifndef CBWANDER_H
+#define CBWANDER_H
 
 #include "RapiChatterbox"
 
@@ -35,13 +35,15 @@ typedef enum {STATE_STOP, STATE_SPINC, STATE_SPINCC, STATE_FORWARD, STATE_BACKWA
 #define FWD_TIME 1
 
 // Redis keys
-#define CMD_STOP "s"
-#define CMD_MOVE "m"
-#define CMD_SPINC "s"
+#define CMD_FORWARD "w"
+#define CMD_BACKWARD "s"
+#define CMD_LEFT "a"
+#define CMD_RIGHT "d"
+#define CMD_SPINC "z"
 #define CMD_SPINCC "c"
 
 /**
- * A controller for chatterbox that drives riii,,,, andomly in a rectangle area.
+ * A controller for chatterbox that drives randomly in a rectangle area.
  * @author Lingkang Zhang
  */
 class CWander : public ARobotCtrl
@@ -51,7 +53,7 @@ class CWander : public ARobotCtrl
      * Default constructor
      * @param robot this controller controls
      */
-    CWander( ARobot* robot, std::string cbID, float turnrate, float velocity);
+    CWander( ARobot* robot, std::string cbID);
     /** Default destructor */
     ~CWander();
 
@@ -127,7 +129,9 @@ class CWander : public ARobotCtrl
     std::string mCBID;
     /** Min photo value */
     float mMinPhoto;
-
+	/** Encounter the bound defined by the black tape on the ground **/
+	bool mBound;
+    bool mBoundFirstTime;
 };
 
 #endif

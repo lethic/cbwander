@@ -32,6 +32,8 @@ CWander::CWander ( ARobot* robot, std::string cbID )
   mMinPhoto = INFINITY;
   mText = 0;
 
+  mBound = 0;
+  mBoundFirst = 1;
 //#ifndef STAGE
 //  mState = STOP;
 //#else
@@ -113,109 +115,131 @@ void CWander::updateData ( float dt )
   redis->get(mCBID, cmd); // get command from redis server
   //printf("command: %s\n", cmd.c_str());
 
-  if ( ! emergencyStop() ) {
+  if ( (! emergencyStop()) && (! mBound) ) {
 	//cout << "cmd is " << cmd << endl;
     switch (mState) {
       case STATE_STOP:
         if (cmd == CMD_FORWARD) {
-	  mTimer = 0.0;
-	  mState = STATE_FORWARD;
-	  redis->set(mCBID, "none");
-	  mDrivetrain->setVelocityCmd(FWD_VEL, 0.0);
-	  printf("driving forward\n");
-        } else if (cmd == CMD_BACKWARD) {
-	  mTimer = 0.0;
-	  mState = STATE_BACKWARD;
-	  redis->set(mCBID, "none");
-	  mDrivetrain->setVelocityCmd(-FWD_VEL, 0.0);
-	  printf("driving backward\n");
-	} else if (cmd == CMD_CIRCLE) {
+		  mTimer = 0.0;
+		  mState = STATE_FORWARD;
+		  redis->set(mCBID, "none");
+		  mDrivetrain->setVelocityCmd(FWD_VEL, 0.0);
+		  printf("driving forward\n");
+   	    } 
+		else if (cmd == CMD_BACKWARD) {
+	  	  mTimer = 0.0;
+	      mState = STATE_BACKWARD;
+	      redis->set(mCBID, "none");
+	      mDrivetrain->setVelocityCmd(-FWD_VEL, 0.0);
+	      printf("driving backward\n");
+	    } 
+		else if (cmd == CMD_CIRCLE) {
           mDrivetrain->setVelocityCmd(mLimit.limit(FWD_VEL), D2R(mturnRate));
 	  	  mState = STATE_CIRCLE;
 	      redis->set(mCBID, "none");
       	  printf("driving circle\n");
-	}
-	  else if (cmd == CMD_LEFT){
-		 mTimer = 0.0;
-	  	 mDrivetrain->setVelocityCmd(FWD_VEL, D2R(mturnRate));
-		 mState = STATE_LEFT;
-		 redis->set(mCBID, "none");
-		 printf("driving left\n"); 
-	  }
-	  else if (cmd == CMD_RIGHT){
-	  	 mTimer = 0.0;
-		 mDrivetrain->setVelocityCmd(mLimit.limit(FWD_VEL), D2R(-mturnRate));
-		 mState = STATE_RIGHT;
-		 redis->set(mCBID, "none");
-		 printf("driving right\n");
-	  }
-      else if (cmd == CMD_SPINC){
-	  	 mTimer = 0.0;
-		 mDrivetrain->setVelocityCmd(0, D2R(-mturnRate*7));
-		 mState = STATE_SPINCC;
-		 redis->set(mCBID, "none");
-		 printf("spinning clockwise\n");
-	  }
-	  else if(cmd == CMD_SPINCC){
-	  	 mTimer = 0.0;
-		 mDrivetrain->setVelocityCmd(0, D2R(mturnRate*7));
-		 mState = STATE_SPINC;
-		 redis->set(mCBID, "none");
-		 printf("spinnning counter-clockwise\n");
-	  }
-	  else{
-	  	cmd = CMD_STOP;
-		mDrivetrain->setVelocityCmd(0.0, 0.0);
-		redis->set(mCBID, "none");
-		printf("stop\n");
-	  }
+	    }
+	    else if (cmd == CMD_LEFT){
+		  mTimer = 0.0;
+	  	  mDrivetrain->setVelocityCmd(FWD_VEL, D2R(mturnRate));
+		  mState = STATE_LEFT;
+		  redis->set(mCBID, "none");
+		  printf("driving left\n"); 
+	    }
+	    else if (cmd == CMD_RIGHT){
+	  	  mTimer = 0.0;
+		  mDrivetrain->setVelocityCmd(mLimit.limit(FWD_VEL), D2R(-mturnRate));
+		  mState = STATE_RIGHT;
+		  redis->set(mCBID, "none");
+		  printf("driving right\n");
+        }
+        else if (cmd == CMD_SPINC){
+	  	  mTimer = 0.0;
+		  mDrivetrain->setVelocityCmd(0, D2R(-mturnRate*7));
+		  mState = STATE_SPINCC;
+		  redis->set(mCBID, "none");
+		  printf("spinning clockwise\n");
+	    }
+	    else if(cmd == CMD_SPINCC){
+	      mTimer = 0.0;
+		  mDrivetrain->setVelocityCmd(0, D2R(mturnRate*7));
+		  mState = STATE_SPINC;
+		  redis->set(mCBID, "none");
+		  printf("spinnning counter-clockwise\n");
+	    } 
+	    else{
+	  	  cmd = CMD_STOP;
+		  mDrivetrain->setVelocityCmd(0.0, 0.0);
+		  redis->set(mCBID, "none");
+		  printf("stop\n");
+	    }
       break;
 
       case STATE_FORWARD:
-	if (mTimer > FWD_TIME) {
-	  mDrivetrain->setVelocityCmd(0.0, 0.0);
-	  mState = STATE_STOP;
-	}
+	    if (mTimer > FWD_TIME) {
+          mDrivetrain->setVelocityCmd(0.0, 0.0);
+	      mState = STATE_STOP;
+	    }
       break;
-      case STATE_BACKWARD:
-	if (mTimer > FWD_TIME) {
-	  mDrivetrain->setVelocityCmd(0.0, 0.0);
-	  mState = STATE_STOP;
-	}
+     
+	  case STATE_BACKWARD:
+	    if (mTimer > FWD_TIME) {
+	      mDrivetrain->setVelocityCmd(0.0, 0.0);
+	      mState = STATE_STOP;
+	    }
       break;
+	 
 	  case STATE_LEFT:
-	  if(mTimer > FWD_TIME) {
-	  	mDrivetrain->setVelocityCmd(0.0, 0.0);
-		mState = STATE_STOP;
-	  }
+        if(mTimer > FWD_TIME) {
+	 	  mDrivetrain->setVelocityCmd(0.0, 0.0);
+		  mState = STATE_STOP;
+	    }
 	  break;
+	 
 	  case STATE_RIGHT:
-	  if(mTimer > FWD_TIME) {
-	  	mDrivetrain->setVelocityCmd(0.0, 0.0);
-		mState = STATE_STOP;
-	  }
+	    if(mTimer > FWD_TIME) {
+	      mDrivetrain->setVelocityCmd(0.0, 0.0);
+	      mState = STATE_STOP;
+	    }
 	  break;
+     
 	  case STATE_SPINC:
-	  if(mTimer > FWD_TIME) {
-	    mDrivetrain->setVelocityCmd(0.0, 0.0);
-		mState = STATE_STOP;
-	  }
+        if(mTimer > FWD_TIME) {
+	      mDrivetrain->setVelocityCmd(0.0, 0.0);
+       	  mState = STATE_STOP;
+	    }
+	  break;
+	 
 	  case STATE_SPINCC:
-	  if(mTimer > FWD_TIME){
-	  	mDrivetrain->setVelocityCmd(0.0, 0.0);
-		mState = STATE_STOP;
-	  }
-      case STATE_CIRCLE:
+        if(mTimer > FWD_TIME){
+	      mDrivetrain->setVelocityCmd(0.0, 0.0);
+      	  mState = STATE_STOP;
+	    }
+	  break;
+     
+	  case STATE_CIRCLE:
         if (cmd == CMD_STOP) {
-	  mDrivetrain->setVelocityCmd(0.0, 0.0);
-	  mState = STATE_STOP;
-	  redis->set(mCBID, "stop");
-	}
+	      mDrivetrain->setVelocityCmd(0.0, 0.0);
+	      mState = STATE_STOP;
+	      redis->set(mCBID, "stop");
+	    }
       break;
-    }
+    } 
   }
   else {
-    printf("Emergency stop.\n");
+     printf("Emergency stop.\n");
+	 if(mBound && mBoundFirst){
+	   printf("Encounter the bound, now spin.\n");
+	   mDrivetrain->setVelocityCmd(0.0, 20.0);
+	   mTimer = 0;
+	   mBoundFirst = false;
+	 }
+	 else if(mBound && (! mBoundFirst)){
+	   // check if it has spinned 180 degree   
+	   if(mTimer > 9.0){
+	     mBound = false;
+	   }	
+	 }
   }
 
   if ( rapiError->hasError() ) {
@@ -234,6 +258,11 @@ bool CWander::emergencyStop()
   }
 
   // Check for cliffs
+  if ( mCliff->isAnyTriggered() ){
+  	stop = true;
+    mBound = true;
+  }
+
 
   if (stop) {
     mDrivetrain->stop();
