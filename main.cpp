@@ -25,7 +25,7 @@
 #include <string.h>
 
 Rapi::CCBRobot* robot = NULL;
-CDriveCircle* robotCtrl = NULL;
+CWander* robotCtrl = NULL;
 
 //-----------------------------------------------------------------------------
 void quitSig(int signum)
@@ -74,7 +74,7 @@ int main( int argc, char* argv[] )
     delete robot;
     exit(-1);
   }
-  robotCtrl = new CDriveCircle ( robot, std::string(argv[1]) );
+  robotCtrl = new CWander ( robot, std::string(argv[1]) );
   robotCtrl->setTurnrate(atof(argv[2]));
   robotCtrl->setVelocity(atof(argv[3]));
   // blocking call

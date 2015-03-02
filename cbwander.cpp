@@ -57,7 +57,10 @@ CWander::CWander ( ARobot* robot, std::string cbID )
   mRobot->findDevice ( mWheelDrop, CB_DEVICE_WHEEL_DROP );
   mRobot->findDevice ( mButton, CB_DEVICE_BUTTON );
   mRobot->findDevice ( mPhoto, CB_DEVICE_PHOTO_SENSOR );
-  mRobot->findDevice ( mCliff, CB_DEVICE_CLIFF );
+  ABinarySensorArray* tempmCliff;
+  mRobot->findDevice ( tempmCliff, CB_DEVICE_CLIFF );
+  mCliff = (CCBCliffSensor*)tempmCliff;
+
 #endif
 
   //mDrivetrain = ( CCBDrivetrain2dof* ) drivetrain;
@@ -93,7 +96,7 @@ void CWander::setTurnrate(float turnrate) {
   mturnRate = turnrate;
 }
 
-void Cwander::setVelocity(float velocity) {
+void CWander::setVelocity(float velocity) {
   mVelocity = velocity;
 }
 
@@ -230,7 +233,7 @@ void CWander::updateData ( float dt )
      printf("Emergency stop.\n");
 	 if(mBound && mBoundFirst){
 	   printf("Encounter the bound, now spin.\n");
-	   mDrivetrain->setVelocityCmd(0.0, 20.0);
+	   mDrivetrain->setVelocityCmd(0.0, D2R(20.0));
 	   mTimer = 0;
 	   mBoundFirst = false;
 	 }
@@ -238,6 +241,8 @@ void CWander::updateData ( float dt )
 	   // check if it has spinned 180 degree   
 	   if(mTimer > 9.0){
 	     mBound = false;
+		 mDrivetrain->setVelocityCmd(0.0, 0.0);
+         mBoundFirst = true;
 	   }	
 	 }
   }
@@ -251,6 +256,12 @@ bool CWander::emergencyStop()
 {
   bool stop = false;
 
+  // Check the cliff sensor data
+  float rawdata;
+  rawdata = mCliff->getRawSensorData(CB_ALL_CLIFF);
+  printf("Cliff sensor data: %f\n", mCliff->getRawSensorData(CB_ALL_CLIFF));
+	//mCliff->print();
+
 #ifndef STAGE
   // Check for wheel drop
   if ( mWheelDrop->isAnyTriggered() ) {
@@ -258,14 +269,16 @@ bool CWander::emergencyStop()
   }
 
   // Check for cliffs
-  if ( mCliff->isAnyTriggered() ){
+  if (mBound)
+	  return true;
+  if ( rawdata > 2500.0 ){
   	stop = true;
     mBound = true;
   }
 
 
   if (stop) {
-    mDrivetrain->stop();
+    //mDrivetrain->stop();
     mLights->setLight ( ALL_LIGHTS, RED );
   }
   else {

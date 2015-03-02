@@ -41,6 +41,8 @@ typedef enum {STATE_STOP, STATE_SPINC, STATE_SPINCC, STATE_FORWARD, STATE_BACKWA
 #define CMD_RIGHT "d"
 #define CMD_SPINC "z"
 #define CMD_SPINCC "c"
+#define CMD_STOP "e"
+#define CMD_CIRCLE "r"
 
 /**
  * A controller for chatterbox that drives randomly in a rectangle area.
@@ -58,7 +60,7 @@ class CWander : public ARobotCtrl
     ~CWander();
 
     void setTurnrate(float tr);
-
+    void setVelocity(float vl);
   protected:
     /**
      * Update controller for the current time step
@@ -99,8 +101,9 @@ class CWander : public ARobotCtrl
     /** Create button */
     ABinarySensorArray* mButton;
     /** Cliff sensor */
-    ABinarySensorArray* mCliff;
-    /** Odometry */
+    //ABinarySensorArray* mCliff;
+    CCBCliffSensor* mCliff;
+	/** Odometry */
     COdometry* mOdometry;
     /** Some limit */
     CLimit mLimit;
@@ -131,7 +134,7 @@ class CWander : public ARobotCtrl
     float mMinPhoto;
 	/** Encounter the bound defined by the black tape on the ground **/
 	bool mBound;
-    bool mBoundFirstTime;
+    bool mBoundFirst;
 };
 
 #endif
